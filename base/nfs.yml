@@ -9,7 +9,6 @@ instance_groups:
   stemcell: default
   networks:
   - name: (( grab params.network ))
-    static_ips: (( static_ips(0) ))
   jobs:
   - name: nfsbroker
     release: nfs-volume
