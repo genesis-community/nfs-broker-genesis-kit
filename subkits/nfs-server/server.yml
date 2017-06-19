@@ -1,0 +1,14 @@
+---
+instance_groups:
+- name: nfsbroker
+  jobs:
+    - name: nfstestserver
+      release: nfs-volume
+      properties:
+        export_cidr: (( grab params.allowed_hosts ))
+
+releases:
+- name: nfs
+  url: https://bosh.io/d/github.com/compozed/nfs-boshrelease?v=0.1
+  sha1: 983fb960c13a6ed77ead8fa0332d2b882e384dd4
+  version: 0.1

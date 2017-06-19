@@ -1,0 +1,50 @@
+---
+name: nfs
+author: Geoff Franks <geoff.franks@gmail.com>
+homepage: https://github.com/cloudfoundry-incubator/nfs-volume-release
+github: https://github.com/genesis-community/nfs-genesis-kit
+
+subkits:
+  - prompt: "Do you need to deploy an NFS server along side the NFS Broker?"
+    subkit: nfs-server
+    default: no
+
+params:
+  base:
+  - param: vm_type
+    description: VM Type defined in Cloud Config to use as the VM type for the NFS broker
+  - param: disk_pool
+    description: Disk Pool defined in Cloud Config to use as the persistent disk for the NFS broker
+  - param: network
+    description: Network defined in Cloud Config to place the NFS broker VM in
+  - param: availability_zones
+    description: Availability zones to place the NFS broker in
+  - param: system_domain
+    ask: What is the system domain of the Cloud Foundry that the NFS broker will register to?
+    description: The system domain of the Cloud Foundry that the NFS broker is registered to
+  - param: cf_deployment
+    description: |
+      Defines the name of the CF deployment that the NFS Broker will register wtih
+  - param: cf_admin_user
+    description: Admin user for CF used to register the NFS broker
+  - param: cf_admin_pass
+    ask: What is the Vault path to your Cloud Foundry admin user's password?
+    description: The vault path to the password of the CF admin user that the NFS broker will register with
+    validate: vault_path
+    default: secret/${params.vault_prefix}/../cf/admin_user:password
+  - param: skip_ssl_validation
+    description: |
+      Ignores SSL certificates when connecting to Cloud Foundry to register the NFS broker
+  nfs-server:
+  - param: allowed_hosts
+    description: List of CIDR ranges to allow NFS exports from
+    ask: What CIDR ranges should be allowed to access the NFS server?
+    type: list
+
+credentials:
+  base:
+    broker:
+      password: random 64
+
+certificates:
+  base: {}
