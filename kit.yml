@@ -4,11 +4,6 @@ author: Geoff Franks <geoff.franks@gmail.com>
 homepage: https://github.com/cloudfoundry-incubator/nfs-volume-release
 github: https://github.com/genesis-community/nfs-genesis-kit
 
-subkits:
-  - prompt: "Do you need to deploy an NFS server along side the NFS Broker?"
-    subkit: nfs-server
-    default: no
-
 params:
   base:
   - param: vm_type
@@ -35,11 +30,6 @@ params:
   - param: skip_ssl_validation
     description: |
       Ignores SSL certificates when connecting to Cloud Foundry to register the NFS broker
-  nfs-server:
-  - param: allowed_hosts
-    description: List of CIDR ranges to allow NFS exports from
-    ask: What CIDR ranges should be allowed to access the NFS server?
-    type: list
 
 credentials:
   base:

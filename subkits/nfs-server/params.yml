@@ -1,4 +1,0 @@
----
-params:
-  no_root_squash: false
-  allowed_hosts: (( param "What hosts should be allowed to talk to NFS?" ))
