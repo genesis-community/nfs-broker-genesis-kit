@@ -22,7 +22,7 @@ genesis init --kit nfs-broker
 genesis init --kit nfs-broker/1.0.0
 
 # create a my-nfs-broker-configs repo using the latest version of the nfs-broker kit
-genesis init --kit nfs-broker -d my-shield-configs
+genesis init --kit nfs-broker -d my-nfs-broker-configs
 ```
 
 Once created, refer to the deployment repo's README for information on creating
