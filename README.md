@@ -15,14 +15,14 @@ To use it, you don't even need to clone this repository!  Just run
 the following (using Genesis v2):
 
 ```
-# create a shield-deployments repo using the latest version of the SHIELD kit
-genesis init --kit shield
+# create a nfs-broker-deployments repo using the latest version of the nfs-broker kit
+genesis init --kit nfs-broker
 
-# create a shield-deployments repo using v1.0.0 of the SHIELD kit
-genesis init --kit shield/1.0.0
+# create a nfs-broker-deployments repo using v1.0.0 of the nfs-broker kit
+genesis init --kit nfs-broker/1.0.0
 
-# create a my-shield-configs repo using the latest version of the SHIELD kit
-genesis init --kit shield -d my-shield-configs
+# create a my-nfs-broker-configs repo using the latest version of the nfs-broker kit
+genesis init --kit nfs-broker -d my-shield-configs
 ```
 
 Once created, refer to the deployment repo's README for information on creating
