@@ -54,4 +54,18 @@ Params
   when registering the service broker. Off by default (certs are checked). Turn this on, if
   your Cloud Foundry is using self-signed certs.
 
+Cloud Config
+------------
+
+By default, this kit uses the following VM types/networks/disk pools from your
+Cloud Config. Feel free to override them in your environment, if you would
+rather they use entities already existing in your Cloud Foundry:
+
+```
+params:
+  network:   default
+  disk_pool: small # should be at least 1GB
+  vm_type:   small # VMs should have at least 1 CPU, and 1GB of memory
+```
+
 [1]: https://github.com/cloudfoundry/nfs-volume-release
