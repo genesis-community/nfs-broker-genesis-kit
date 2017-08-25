@@ -58,17 +58,17 @@ instance_groups:
 
 releases:
 - name: nfs-volume
-  version: 1.0.6
-  sha1: 3ea1110e862ce27ee53bd0b2c482fe53af36ed06
-  url: https://bosh.io/d/github.com/cloudfoundry-incubator/nfs-volume-release?v=1.0.6
+  version: 1.0.7
+  sha1: f609a25be32e1fc634e683cc3a89c0aaad1e70f0
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/nfs-volume-release?v=1.0.7
 - name: broker-registrar
-  version: 3.2.2
-  url: https://bosh.io/d/github.com/cloudfoundry-community/broker-registrar-boshrelease?v=3.2.2
-  sha1: f82c6a346d871ccb9835b8e6341f966cf7ebc7c9
+  version: 3.3.1
+  url: https://bosh.io/d/github.com/cloudfoundry-community/broker-registrar-boshrelease?v=3.3.1
+  sha1: 3625828feca7134fd895adf0470bfd91b628bc22
 - name: routing
-  version: 0.156.0
-  url: https://bosh.io/d/github.com/cloudfoundry-incubator/cf-routing-release?v=0.156.0
-  sha1: c0cbf0a4851a36e16a3d8c8cd735d9f64fc4c702
+  version: 0.162.0
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/cf-routing-release?v=0.162.0
+  sha1: f17cf09d2414f5f486d18bbd57b17fd48fb69773
 
 stemcells:
 - alias: default
