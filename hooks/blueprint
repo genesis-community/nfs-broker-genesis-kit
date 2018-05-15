@@ -1,0 +1,4 @@
+#!/bin/bash
+set -eu
+validate_features # none
+echo manifests/nfs-broker.yml

@@ -1,0 +1,68 @@
+---
+meta:
+  default:
+    azs: [z1]
+    system_domain: (( vault "secret/exodus/" params.cf "/cf:system-domain" ))
+
+params:
+  cf: (( param "Please specify the name of your Cloud Foundry Genesis Environment" ))
+
+instance_groups:
+- name: nfsbroker
+  instances: 1
+  azs:       (( grab params.availability_zones || meta.default.azs ))
+
+  # FIXME: why does the NFS broker have a persistent disk?
+  persistent_disk_pool: (( grab params.disk_pool || "small" ))
+  vm_type:              (( grab params.vm_type || "small" ))
+
+  stemcell: default
+  networks:
+    - name: (( grab params.network || "default" ))
+  jobs:
+    - name: nfsbroker
+      release: nfs-volume
+      properties:
+        nfsbroker:
+          plan_desc: Export existing NFS shares as CF Services
+          username: nfs-broker
+          password: (( vault meta.vault "broker:password" ))
+    - name: route_registrar
+      release: routing
+      consumes:
+        nats:
+          from: nats
+          deployment: (( concat params.cf "-cf" ))
+      properties:
+        route_registrar:
+          routes:
+            - name: nfs-broker
+              port: 8999
+              registration_interval: 20s
+              tags:
+                component: nfs-broker
+              uris:
+                - (( concat "nfs-broker." meta.system_domain ))
+
+releases:
+- name: nfs-volume
+  version: 1.0.7
+  sha1: f609a25be32e1fc634e683cc3a89c0aaad1e70f0
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/nfs-volume-release?v=1.0.7
+- name: routing
+  version: 0.162.0
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/cf-routing-release?v=0.162.0
+  sha1: f17cf09d2414f5f486d18bbd57b17fd48fb69773
+
+stemcells:
+- alias: default
+  os:      (( grab params.stemcell_os      || "ubuntu-trusty" ))
+  version: (( grab params.stemcell_version || "latest"))
+
+update:
+  serial: false
+  canaries: 1
+  canary_watch_time: 30000-600000
+  update_watch_time: 5000-600000
+  max_in_flight: 1
+  max_errors: 1

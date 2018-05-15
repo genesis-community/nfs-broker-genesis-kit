@@ -1,0 +1,18 @@
+#!/bin/bash
+set -u
+
+prompt_for cf line \
+	'What is the name of your Cloud Foundry Genesis Environment?'
+
+(
+echo "---"
+echo "kit:"
+echo "  name:    $GENESIS_KIT_NAME"
+echo "  version: $GENESIS_KIT_VERSION"
+
+echo
+echo "params:"
+echo "  env:   $GENESIS_ENVIRONMENT"
+echo
+echo "  cf: $cf"
+) >$GENESIS_ROOT/$GENESIS_ENVIRONMENT.yml

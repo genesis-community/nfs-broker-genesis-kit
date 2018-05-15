@@ -1,0 +1,61 @@
+#!/bin/bash
+set -eu
+
+list() {
+  echo "The following addons are defined:"
+  echo
+  echo "  register  Register this NFS Broker with one of your"
+  echo "            Genesis-deployed Cloud Foundry instances"
+  echo
+  echo "  eden      Interact with the broker via 'eden'"
+  echo "            (must be installed separately)"
+  echo
+}
+
+case $GENESIS_ADDON_SCRIPT in
+list)
+  list
+  exit 0
+  ;;
+
+eden)
+  if ! command -v eden >/dev/null 2>&1; then
+    echo "  !!! install the 'eden' cli first!"
+    echo "      (https://github.com/starkandwayne/eden)"
+  else
+    exec eden "$@"
+  fi
+  ;;
+
+register)
+  cf=$(lookup params.cf)
+  cf_api=$(exodus $cf/cf api_url)
+  cf_user=$(exodus $cf/cf admin_username)
+  cf_pass=$(exodus $cf/cf admin_password)
+
+  (export HOME=$(mktemp -d blacksmith.regXXXXXXX)
+   describe "authenticating to #C{$cf_api} as #G{$cf_user}..."
+   cf api ${cf_api}
+   cf auth ${cf_user} ${cf_pass}
+
+   describe "creating service broker #M{$cf-nfs-broker}..."
+   cf create-service-broker \
+      $cf-nfs-broker        \
+      $SB_BROKER_USERNAME   \
+      $SB_BROKER_PASSWORD   \
+      $SB_BROKER_URL
+
+   describe "enabling service access..."
+   for x in $(curl -Lsk -u "$SB_BROKER_USERNAME:$SB_BROKER_PASSWORD" "$SB_BROKER_URL/v2/catalog" \
+                   -H Accept:application/json | jq -r '.services[].id'); do
+     describe "  - #C{$x}"
+     cf enable-service-access $x
+  done)
+  ;;
+
+*)
+  echo "Unrecognized NFS Broker Genesis Kit addon."
+  list
+  exit 1
+  ;;
+esac
