@@ -8,17 +8,15 @@ params:
   cf: (( param "Please specify the name of your Cloud Foundry Genesis Environment" ))
 
 instance_groups:
-- name: nfsbroker
+- name:      nfsbroker
   instances: 1
   azs:       (( grab params.availability_zones || meta.default.azs ))
+  vm_type:   (( grab params.vm_type || "small" ))
+  stemcell:  default
 
-  # FIXME: why does the NFS broker have a persistent disk?
-  persistent_disk_pool: (( grab params.disk_pool || "small" ))
-  vm_type:              (( grab params.vm_type || "small" ))
-
-  stemcell: default
   networks:
     - name: (( grab params.network || "default" ))
+
   jobs:
     - name: nfsbroker
       release: nfs-volume
