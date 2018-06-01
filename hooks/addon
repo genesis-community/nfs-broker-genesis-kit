@@ -33,7 +33,7 @@ register)
   cf_user=$(exodus $cf/cf admin_username)
   cf_pass=$(exodus $cf/cf admin_password)
 
-  (export HOME=$(mktemp -d blacksmith.regXXXXXXX)
+  (export HOME=$(mktemp -d nfs-broker.regXXXXXXX)
    describe "authenticating to #C{$cf_api} as #G{$cf_user}..."
    cf api ${cf_api}
    cf auth ${cf_user} ${cf_pass}
