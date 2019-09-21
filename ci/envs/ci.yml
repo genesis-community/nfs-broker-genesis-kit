@@ -4,3 +4,9 @@ kit:
 
 params:
   availability_zones: [z1]
+
+instance_groups:
+  - name: nfsbroker
+    jobs:
+      - name: route_registrar
+        consumes: (( delete ))

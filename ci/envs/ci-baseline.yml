@@ -9,8 +9,3 @@ params:
   system_domain: system.foo.example.com
   cf_admin_user: admin
   cf_admin_pass: "secret/handshake:knock"
-
-instance_groups:
-  - name: nfsbroker
-    jobs:
-      - (( delete route_registrar ))
