@@ -13,4 +13,4 @@ params:
 instance_groups:
   - name: nfsbroker
     jobs:
-      - (( delete router_registrar ))
+      - (( delete route_registrar ))
