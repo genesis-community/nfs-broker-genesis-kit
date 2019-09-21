@@ -1,0 +1,15 @@
+releases:
+  - name:    nfs-volume
+    version: "1.0.7"
+    url:     (( concat "https://bosh.io/d/github.com/cloudfoundry-incubator/nfs-volume-release?v=" releases.nfs-volume.version ))
+    sha1:    f609a25be32e1fc634e683cc3a89c0aaad1e70f0
+
+  - name:    broker-registrar
+    version: "3.3.1"
+    url:     (( concat "https://bosh.io/d/github.com/cloudfoundry-community/broker-registrar-boshrelease?v=" releases.broker-registrar.version ))
+    sha1:    3625828feca7134fd895adf0470bfd91b628bc22
+
+  - name:    routing
+    version: "0.162.0"
+    url:     (( concat "https://bosh.io/d/github.com/cloudfoundry-incubator/cf-routing-release?v=" releases.routing.version ))
+    sha1:    f17cf09d2414f5f486d18bbd57b17fd48fb69773

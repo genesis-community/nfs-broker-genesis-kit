@@ -1,0 +1,82 @@
+---
+meta:
+  default:
+    azs: [z1]
+
+params:
+  system_domain: (( param "What is the system domain of the Cloud Foundry NFS broker should register with?" ))
+  cf_admin_user: admin
+  cf_admin_pass: (( param "What is the vault path to the CF admin user that NFS broker should register with?" ))
+  skip_ssl_validation: false
+
+  cf_deployment: (( concat params.env "-cf" ))
+
+
+instance_groups:
+  - name:      nfsbroker
+    instances: 1
+
+    azs: (( grab params.availability_zones || meta.default.azs ))
+    networks:
+      - name: (( grab params.network || "default" ))
+
+    stemcell:  default
+    vm_resources:
+      cpu: 2
+      ram: 2048
+      ephemeral_disk_size: 4096
+
+    jobs:
+      - name:    nfsbroker
+        release: nfs-volume
+        properties:
+          nfsbroker:
+            plan_desc: A Cloud Foundry Service Broker for mounting exisiting NFS shares
+            username:  nfs-broker
+            password:  (( vault meta.vault "/broker:password" ))
+
+      - name:    route_registrar
+        release: routing
+        consumes:
+          nats:
+            from: nats
+            deployment: (( grab params.cf_deployment ))
+
+        properties:
+          route_registrar:
+            routes:
+              - name: nfs-broker
+                port: 8999
+                registration_interval: 20s
+                tags:
+                  component: nfs-broker
+                uris:
+                  - (( concat "nfs-broker." params.system_domain ))
+
+      - name: broker-registrar
+        release: broker-registrar
+        properties:
+          servicebroker:
+            name:     nfs-broker
+            username: nfs-broker
+            password: ((vault meta.vault "/broker:password" ))
+            url:      (( concat "http://nfs-broker." params.system_domain ))
+
+          cf:
+            api_url:  (( concat "api." params.system_domain ))
+            username: (( grab params.cf_admin_user ))
+            password: (( vault params.cf_admin_pass ))
+            skip_ssl_validation: (( grab params.skip_ssl_validation ))
+
+stemcells:
+  - alias:   default
+    os:      (( grab params.stemcell_os      || "ubuntu-xenial" ))
+    version: (( grab params.stemcell_version || "latest" ))
+
+update:
+  serial: false
+  canaries: 1
+  canary_watch_time: 30000-600000
+  update_watch_time: 5000-600000
+  max_in_flight: 1
+  max_errors: 1

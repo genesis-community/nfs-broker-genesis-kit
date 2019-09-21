@@ -1,0 +1,10 @@
+#!/bin/bash
+set -eu
+
+declare -a merge
+validate_features # none
+
+merge=( manifests/nfs.yml
+        manifests/releases.yml )
+
+echo "${merge[@]}"
