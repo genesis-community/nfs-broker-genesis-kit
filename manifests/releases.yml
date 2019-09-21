@@ -1,8 +1,8 @@
 releases:
   - name:    nfs-volume
-    version: "1.7.7"
+    version: "1.3.1"
     url:     (( concat "https://bosh.io/d/github.com/cloudfoundry/nfs-volume-release?v=" releases.nfs-volume.version ))
-    sha1:    f4d472551f37fcd898e99ef93070b261b2d21d71
+    sha1:    54108a968da6052d8ddaaa5b615f4d2f7f068e20
 
   - name:    broker-registrar
     version: "3.5.2"

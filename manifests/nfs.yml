@@ -34,6 +34,7 @@ instance_groups:
             plan_desc: A Cloud Foundry Service Broker for mounting exisiting NFS shares
             username:  nfs-broker
             password:  (( vault meta.vault "/broker:password" ))
+
             services:
               - id: nfs-service-guid
                 name: nfs
