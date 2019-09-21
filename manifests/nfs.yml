@@ -27,6 +27,9 @@ instance_groups:
       ephemeral_disk_size: 4096
 
     jobs:
+      - name:    bpm
+        release: bpm
+
       - name:    nfsbroker
         release: nfs-volume
         properties:

@@ -13,3 +13,8 @@ releases:
     version: "0.191.0"
     url:     (( concat "https://bosh.io/d/github.com/cloudfoundry-incubator/cf-routing-release?v=" releases.routing.version ))
     sha1:    8d6e700e43c0312614364cf4e84f0ac63b931a9e
+
+  - name:    bpm
+    version: "1.1.0"
+    url:     (( concat "https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=" releases.bpm.version ))
+    sha1:    82e83a5e8ebd6e07f6ca0765e94eb69e03324a19
