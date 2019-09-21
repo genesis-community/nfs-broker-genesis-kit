@@ -9,4 +9,4 @@ instance_groups:
   - name: nfsbroker
     jobs:
       - name: route_registrar
-        consumes: (( delete ))
+        consumes: (( empty hash ))
