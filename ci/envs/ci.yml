@@ -17,6 +17,8 @@ instance_groups:
     networks:
       - name: default
     jobs:
+      - name:    bpm
+        release: bpm
       - name:    nats
         release: nats
         provides:
@@ -35,6 +37,11 @@ instance_groups:
             password:     nats
 
 releases:
+  - name:    bpm
+    version: "1.1.0"
+    url:     (( concat "https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=" releases.bpm.version ))
+    sha1:    82e83a5e8ebd6e07f6ca0765e94eb69e03324a19
+
   - name:    nats
     version: "27"
     url:     (( concat "https://bosh.io/d/github.com/cloudfoundry/nats-release?v=" releases.nats.version ))
