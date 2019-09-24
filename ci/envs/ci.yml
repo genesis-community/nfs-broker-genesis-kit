@@ -6,7 +6,33 @@ params:
   availability_zones: [z1]
 
 instance_groups:
-  - name: nfsbroker
+  - name:      nats
+    instances: 1
+    vm_type:   default
+    stemcell:  default
+    azs:       [z1]
+    networks:
+      - name: default
     jobs:
-      - name: route_registrar
-        consumes: (( empty hash ))
+      - name:    nats
+        release: nats
+        provides:
+          nats: {as: nats, shared: true}
+
+        properties:
+          nats:
+            debug:        false
+            trace:        false
+
+            monitor_port: 9222
+            prof_port:    0
+            port:         4222
+
+            user:         nats
+            password:     nats
+
+releases:
+  - name:    nats
+    version: "27"
+    url:     (( concat "https://bosh.io/d/github.com/cloudfoundry/nats-release?v=" releases.nats.version ))
+    sha1:    9817e8e460b8619a99a0a0fbec8220dc12b2a6f5
