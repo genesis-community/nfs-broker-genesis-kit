@@ -5,6 +5,9 @@ kit:
 params:
   availability_zones: [z1]
 
+  # fake out the cf deployment link, we colocate nats below.
+  cf_deployment: (( grab name ))
+
 instance_groups:
   - name:      nats
     instances: 1
