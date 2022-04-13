@@ -1,6 +1,6 @@
 ---
 meta:
-  kit:             nfs-broker
+  kit:             nfs
   release:         NFS-Broker Genesis Kit
   target:          cloudpipes/genesis
   url:             https://cloudpipes.starkandwayne.com
