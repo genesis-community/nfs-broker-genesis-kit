@@ -1,0 +1,13 @@
+---
+kit:
+  features:
+    - ((append))
+
+
+genesis:
+  env:   ci-gcp-baseline
+
+params:
+  system_domain: system.foo.example.com
+  cf_admin_user: admin
+  cf_admin_pass: "secret/handshake:knock"

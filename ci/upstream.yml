@@ -1,13 +1,4 @@
----
-# This file contains patterns for generating links to upstream release notes,
-# for constituent releases.
-
-core:
-  - name:  nfs-volume
-    notes: https://github.com/cloudfoundry-incubator/nfs-volume-release/releases/tag/v${version}
-
-  - name:  broker-registrar
-    notes: https://github.com/cloudfoundry-community/broker-registrar-boshrelease/releases/tag/v${version}
-
-  - name:  routing
-    notes: https://github.com/cloudfoundry-incubator/cf-routing-release/releases/tag/v${version}
+sections:
+  - name:  releases
+    label: Releases
+    default: true
