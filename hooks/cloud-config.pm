@@ -40,6 +40,9 @@ sub perform {
 							'net_id' => $self->network_reference('id'),
 							'security_groups' => ['default']
 						},
+						aws => {
+							'subnet' => $self->network_reference('id')
+						},
 					},
 				},
 			)
@@ -57,6 +60,23 @@ sub perform {
 							'size' => 20 # in gigabytes
 						},
 					},
+					aws => {
+						'instance_type' => $self->for_scale({
+							dev => 't3.medium',
+							prod => 'm6i.large'
+						}, 't3.medium'),
+						'ephemeral_disk' => {
+							'size' => $self->for_scale({
+								dev => 16384,
+								prod => 16384
+							}, 16384),
+							'type' => 'gp3',
+							'encrypted' => $self->TRUE
+						},
+						'metadata_options' => {
+							'http_tokens' => 'required'
+						}
+					},
 				},
 			),
 		],
@@ -64,13 +84,17 @@ sub perform {
 			$self->disk_type_definition('nfs',
 				common => {
 					disk_size => $self->for_scale({
-						dev => gigabytes(50),
-						prod => gigabytes(100)
-					}, gigabytes(50)),
+						dev => 32768,
+						prod => 65536
+					}, 32768),
 				},
 				cloud_properties_for_iaas => {
 					openstack => {
 						'type' => 'storage_premium_perf6',
+					},
+					aws => {
+						'type' => 'gp3',
+						'encrypted' => $self->TRUE
 					},
 				},
 			),
