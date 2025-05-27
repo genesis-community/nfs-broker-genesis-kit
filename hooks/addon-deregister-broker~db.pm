@@ -120,7 +120,7 @@ sub perform {
 
 	info("\n#G{Service broker '$broker_name' successfully deregistered from Cloud Foundry.}");
 
-	return $self->done(1);
+  return $self->done();
 }
 
 1;

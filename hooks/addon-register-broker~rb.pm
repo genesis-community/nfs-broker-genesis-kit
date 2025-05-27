@@ -113,7 +113,7 @@ sub perform {
 		info("\n#G{Service access successfully enabled.}");
 	}
 
-	return $self->done(1);
+  return $self->done();
 }
 
 1;

@@ -42,7 +42,7 @@ sub perform {
 		"\tpassword: #G{$broker_password}\n".
 	);
 
-	return $self->done(1);
+	return $self->done();
 }
 
 1;

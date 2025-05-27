@@ -106,15 +106,14 @@ addons:
 EOF
 
 	info(
-		"\n".
-		"\nHere's your broker-registrar runtime config:\n".
+		"\n\nHere's your broker-registrar runtime config:\n".
 		"\t#G{$runtime_config}\n".
 		"\nTo apply this runtime config, save it to a file (e.g., broker-registrar.yml) and run:\n".
 		"\t#G{bosh -e <bosh-env> update-runtime-config broker-registrar.yml}\n".
 		"\nThis will configure your BOSH deployment to automatically register the broker with Cloud Foundry.\n"
 	);
 
-	return $self->done(1);
+  return $self->done();
 }
 
 1;

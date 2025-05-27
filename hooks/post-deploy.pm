@@ -38,7 +38,7 @@ sub perform {
 	$self->SUPER::perform() if $self->can('SUPER::perform');
 
 	# Mark the hook as completed successfully
-	return $self->done(1);
+	return $self->done();
 }
 
 1;
