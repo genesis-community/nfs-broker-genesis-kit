@@ -6,6 +6,14 @@ code:   https://github.com/genesis-community/nfs-broker-genesis-kit
 
 genesis_version_min: 2.6.0
 
+supports:
+- aws
+- azure
+- gcp
+- openstack
+- vsphere
+- stackit
+
 credentials:
   base:
     broker:
