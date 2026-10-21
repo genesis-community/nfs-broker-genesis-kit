@@ -6,7 +6,21 @@
 
 This Genesis Kit deploys the [Cloud Foundry NFS Broker][1], which allows Cloud Foundry applications to mount existing NFS volumes via the CF volume services feature. The broker is deployed as a single VM via BOSH, backed by persistent disk storage to manage the service-broker state.
 
-> **Note:** If you have a MySQL or PostgreSQL service available in your Cloud Foundry, you may prefer deploying the NFS broker as a CF application with a database backend for high availability. This Genesis Kit is ideal for environments where a standalone broker is preferred or where database services aren't readily available.
+## Moving off this kit
+
+The cf kit's `nfs-broker-push` errand pushes its broker as an app named `nfs-broker` on the route `nfs-broker.<system domain>`, and it offers the same `nfs` service. That is the route and the service this kit's broker already holds, so we remove this kit's broker before we run the errand. We move in this order:
+
+1. Record each NFS service instance, with its share, its mount options, and the apps bound to it, because the old instances do not carry over to the new broker.
+
+2. Unbind and delete those service instances, then delete the broker registration with `cf delete-service-broker nfs-broker`.
+
+3. Delete this kit's deployment with `genesis <env> delete`.
+
+4. Enable `nfs-volume-services` in the cf kit environment, deploy it, and run the `nfs-broker-push` errand.
+
+5. Enable service access for the `nfs` offering, then recreate the service instances and bind them to the same apps again.
+
+In an OCFP environment, we deploy a cf kit release that includes the OCFP fix for `nfs-volume-services`. Earlier releases forced the LDAP settings on every OCFP environment and did not place the errand on the OCFP networks and AZs, so on those releases we upgrade the cf kit first.
 
 ## Architecture Overview
 

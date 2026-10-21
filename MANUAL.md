@@ -4,6 +4,22 @@
 >
 > To offer NFS volume services, we enable the `nfs-volume-services` feature of the [Cloud Foundry Genesis kit](https://github.com/genesis-community/cf-genesis-kit) instead. That feature runs the broker as a Cloud Foundry app and adds the NFS driver to the Diego cells. If we map application users to NFS users through LDAP, we also enable the cf kit's `nfs-ldap` feature.
 
+## Moving off this kit
+
+The cf kit's `nfs-broker-push` errand pushes its broker as an app named `nfs-broker` on the route `nfs-broker.<system domain>`, and it offers the same `nfs` service. That is the route and the service this kit's broker already holds, so we remove this kit's broker before we run the errand. We move in this order:
+
+1. Record each NFS service instance, with its share, its mount options, and the apps bound to it, because the old instances do not carry over to the new broker.
+
+2. Unbind and delete those service instances, then delete the broker registration with `cf delete-service-broker nfs-broker`.
+
+3. Delete this kit's deployment with `genesis <env> delete`.
+
+4. Enable `nfs-volume-services` in the cf kit environment, deploy it, and run the `nfs-broker-push` errand.
+
+5. Enable service access for the `nfs` offering, then recreate the service instances and bind them to the same apps again.
+
+In an OCFP environment, we deploy a cf kit release that includes the OCFP fix for `nfs-volume-services`. Earlier releases forced the LDAP settings on every OCFP environment and did not place the errand on the OCFP networks and AZs, so on those releases we upgrade the cf kit first.
+
 ## Introduction
 
 The NFS-Broker Genesis Kit deploys a service broker for Cloud Foundry that allows applications to mount existing NFS volumes through Cloud Foundry's volume services feature. 
@@ -15,7 +31,7 @@ Unlike other service brokers that provision new resources, the NFS broker connec
 - Providing persistent storage that survives application restarts
 - Integration with existing NFS-based workflows and systems
 
-The broker is deployed as a single VM through BOSH, making it suitable for environments where a standalone service is preferred over running the broker as a Cloud Foundry application.
+The broker is deployed as a single VM through BOSH.
 
 ## Architecture
 
