@@ -1,5 +1,9 @@
 # NFS-Broker Genesis Kit Manual
 
+> **This kit is retired.** We no longer develop or support it, and we do not recommend it for new deployments. The `nfsbroker` job that it deploys was removed from [nfs-volume-release](https://github.com/cloudfoundry/nfs-volume-release) after the v2.0.x releases, so the kit cannot move to a current release of NFS volume services.
+>
+> To offer NFS volume services, we enable the `nfs-volume-services` feature of the [Cloud Foundry Genesis kit](https://github.com/genesis-community/cf-genesis-kit) instead. That feature runs the broker as a Cloud Foundry app and adds the NFS driver to the Diego cells. If we map application users to NFS users through LDAP, we also enable the cf kit's `nfs-ldap` feature.
+
 ## Introduction
 
 The NFS-Broker Genesis Kit deploys a service broker for Cloud Foundry that allows applications to mount existing NFS volumes through Cloud Foundry's volume services feature. 
