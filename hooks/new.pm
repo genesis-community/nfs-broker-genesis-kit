@@ -10,7 +10,7 @@ BEGIN {push @INC, $ENV{GENESIS_LIB} ? $ENV{GENESIS_LIB} : $ENV{HOME}.'/.genesis/
 use parent qw(Genesis::Hook);
 
 use Genesis qw/bail info run/;
-use Genesis::UI qw(prompt_for_boolean prompt_for);
+use Genesis::UI qw(prompt_for_choice prompt_for_line);
 
 sub init {
 	my $class = shift;
@@ -48,17 +48,18 @@ sub _identify_network {
 		return 'nfs';
 	}
 
-	($out, $rc) = run('ccq \'.networks | sort_by(.name)| .[] | .name | "-o \\(.)"\'');
+	($out, $rc) = run('ccq \'.networks | sort_by(.name) | .[] | .name\'');
 	bail("Failed to retrieve networks from cloud config: $out") if $rc != 0;
 
-	my @network_options = split(/\s+/, $out);
+	my @network_options = grep { length($_) } split(/\n/, $out);
+	bail("The cloud config defines no networks to deploy the NFS broker on.")
+		unless @network_options;
 
-	my $network;
-	prompt_for('network', 'select',
+	return prompt_for_choice(
 		'What network do you want to use for this NFS deployment?',
-		@network_options, \$network);
-
-	return $network;
+		\@network_options,
+		$network_options[0]
+	);
 }
 
 sub _get_static_ip {
@@ -72,15 +73,15 @@ sub _get_static_ip {
 
 	chomp($default_ip);
 
-	my $default = "";
-	if ($default_ip =~ /^([0-9]{1,3}(\.|$)){4}$/) {
-		$default = "--default $default_ip";
-	}
+	# Offer the first static IP as the default when it is a valid address
+	my $default = ($default_ip =~ /^([0-9]{1,3}(\.|$)){4}$/) ? $default_ip : undef;
 
-	my $ip;
-	prompt_for('ip', 'line',
+	my $ip = prompt_for_line(
 		'What static IP do you want to deploy this NFS server on?',
-		"--validation ip $default", \$ip);
+		'Static IP',
+		$default,
+		'ip'
+	);
 
 	return $ip;
 }
