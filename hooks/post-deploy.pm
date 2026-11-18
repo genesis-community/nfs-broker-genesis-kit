@@ -25,12 +25,10 @@ sub perform {
 			"\n#M{$ENV{GENESIS_ENVIRONMENT}} NFS Broker deployed!\n".
 			"\nFor details about the deployment, run:\n".
 			"\t#G{$ENV{GENESIS_CALL_ENV} info}\n".
-			"\nTo open the NFS Broker management endpoint:\n".
-			"\t#G{$ENV{GENESIS_CALL_ENV} do -- open}\n".
 			"\nTo register the broker with Cloud Foundry:\n".
 			"\t#G{$ENV{GENESIS_CALL_ENV} do -- register-broker}\n".
 			"\nTo generate a broker-registrar runtime config:\n".
-			"\t#G{$ENV{GENESIS_CALL_ENV} do -- runtimeconfig}\n"
+			"\t#G{$ENV{GENESIS_CALL_ENV} do -- runtime-config}\n"
 		);
 	}
 
