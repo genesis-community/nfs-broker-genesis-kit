@@ -38,7 +38,7 @@ sub perform {
 		}
 	}
 
-	return $self->build_features_list();
+	return $self->done();
 }
 
 1;

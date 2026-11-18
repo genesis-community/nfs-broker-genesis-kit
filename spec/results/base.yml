@@ -1,0 +1,102 @@
+exodus:
+  bosh: base
+  features: ""
+  iaas: null
+  is_director: false
+  scale: null
+  services: null
+  use_create_env: false
+instance_groups:
+- azs:
+  - z1
+  instances: 1
+  jobs:
+  - name: bpm
+    release: bpm
+  - name: nfsbroker
+    properties:
+      nfsbroker:
+        password: <!{meta.vault}/broker:password!>
+        plan_desc: A Cloud Foundry Service Broker for mounting exisiting NFS shares
+        services:
+        - bindable: true
+          description: Existing NFSv3 / NFSv4 Volumes
+          id: nfs-service-guid
+          name: nfs
+          plan_updateable: false
+          plans:
+          - description: A preexisting filesystem
+            id: Existing
+            name: Existing
+            requires:
+            - volume_mount
+            tags:
+            - nfs
+        username: nfs-broker
+    release: nfs-volume
+  - consumes:
+      nats:
+        deployment: base-cf
+        from: nats
+    name: route_registrar
+    properties:
+      route_registrar:
+        routes:
+        - name: nfs-broker
+          port: 8999
+          registration_interval: 20s
+          tags:
+            component: nfs-broker
+          uris:
+          - nfs-broker.sys.test.cf.domain
+    release: routing
+  - name: broker-registrar
+    properties:
+      cf:
+        api_url: api.sys.test.cf.domain
+        password: cf-admin-password
+        skip_ssl_validation: false
+        username: admin
+      servicebroker:
+        name: nfs-broker
+        password: <!{meta.vault}/broker:password!>
+        url: http://nfs-broker.sys.test.cf.domain
+        username: nfs-broker
+    release: broker-registrar
+  name: nfsbroker
+  networks:
+  - name: default
+  stemcell: default
+  vm_resources:
+    cpu: 2
+    ephemeral_disk_size: 4096
+    ram: 2048
+name: base-nfs
+releases:
+- name: nfs-volume
+  sha1: 54108a968da6052d8ddaaa5b615f4d2f7f068e20
+  url: https://bosh.io/d/github.com/cloudfoundry/nfs-volume-release?v=1.3.1
+  version: 1.3.1
+- name: broker-registrar
+  sha1: 5e49325730c41321b20ac1fe5b9bd93408263f34
+  url: https://bosh.io/d/github.com/cloudfoundry-community/broker-registrar-boshrelease?v=3.5.2
+  version: 3.5.2
+- name: routing
+  sha1: 8d6e700e43c0312614364cf4e84f0ac63b931a9e
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/cf-routing-release?v=0.191.0
+  version: 0.191.0
+- name: bpm
+  sha1: 82e83a5e8ebd6e07f6ca0765e94eb69e03324a19
+  url: https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=1.1.0
+  version: 1.1.0
+stemcells:
+- alias: default
+  os: ubuntu-xenial
+  version: latest
+update:
+  canaries: 1
+  canary_watch_time: 30000-600000
+  max_errors: 1
+  max_in_flight: 1
+  serial: false
+  update_watch_time: 5000-600000

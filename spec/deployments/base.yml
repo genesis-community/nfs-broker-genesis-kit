@@ -1,0 +1,13 @@
+---
+kit:
+  name: dev
+  version: latest
+  features: []
+
+genesis:
+  env: base
+
+params:
+  static_ip:     10.99.0.20
+  system_domain: sys.test.cf.domain
+  cf_admin_pass: secret/exodus/base-cf/cf:admin_password

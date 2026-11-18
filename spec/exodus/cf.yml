@@ -1,0 +1,5 @@
+/secret/exodus/base-cf/cf:
+  system_domain: sys.test.cf.domain
+  api_domain: api.sys.test.cf.domain
+  admin_username: admin
+  admin_password: cf-admin-password
