@@ -39,7 +39,7 @@ sub perform {
 		"\t#C{http://$static_ip}\n".
 		"Broker credentials\n".
 		"\tusername: #M{$broker_username}\n".
-		"\tpassword: #G{$broker_password}\n".
+		"\tpassword: #G{$broker_password}\n"
 	);
 
 	return $self->done(1);

@@ -30,7 +30,7 @@ sub perform {
 			"\nTo register the broker with Cloud Foundry:\n".
 			"\t#G{$ENV{GENESIS_CALL_ENV} do -- register-broker}\n".
 			"\nTo generate a broker-registrar runtime config:\n".
-			"\t#G{$ENV{GENESIS_CALL_ENV} do -- runtimeconfig}\n".
+			"\t#G{$ENV{GENESIS_CALL_ENV} do -- runtimeconfig}\n"
 		);
 	}
 
