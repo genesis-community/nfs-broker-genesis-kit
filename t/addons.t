@@ -173,4 +173,44 @@ my $vault = FakeVault->new({'/secret/base/nfs/broker:password' => 'pw-from-vault
 	unlike(join("\n", @shown), qr/pw-from-vault/, 'the password is not shown when writing the file');
 }
 
+# runtime-config derives the CF API URL from the CF exodus
+{
+	require "$hooks/addon-runtime-config~rc.pm";
+	my $class = 'Genesis::Hook::Addon::NFS::RuntimeConfig';
+	my @shown;
+	no warnings qw(redefine once);
+	local *Genesis::Hook::Addon::NFS::RuntimeConfig::info = sub { push @shown, join(' ', @_) };
+	my %nfs_exodus = (
+		service_name    => 'nfs',
+		broker_url      => 'http://nfs-broker.sys.example.com',
+		broker_username => 'nfs-broker',
+	);
+	my $run = sub {
+		my ($env, @args) = @_;
+		@shown = ();
+		my $self = bless {
+			env   => $env,
+			args  => [@args],
+			vault => FakeVault->new({'/secret/base/nfs/broker:password' => 'pw-from-vault'}),
+		}, $class;
+		$self->perform;
+		return join("\n", @shown);
+	};
+
+	my $env = FakeEnv->new(exodus => \%nfs_exodus, cf_exodus => {api_domain => 'api.cf.example.com'});
+	like($run->($env), qr{api_url: https://api\.cf\.example\.com\b}, 'the API URL is https:// plus the CF exodus api_domain');
+	is($env->{asked_for}, 'base/cf', 'the CF exodus of the same environment name is read');
+
+	like($run->($env, '--cf-api-url', 'https://api.other.example.com'), qr{api_url: https://api\.other\.example\.com\b},
+		'--cf-api-url wins over the exodus');
+
+	# A CF exodus from before api_domain was published, with the system domain in the env file
+	my $old = FakeEnv->new(exodus => \%nfs_exodus, cf_exodus => {}, params => {system_domain => 'sys.example.com'});
+	like($run->($old), qr{api_url: https://api\.sys\.example\.com\b}, 'the system domain gives the API host when exodus has none');
+
+	my $none = FakeEnv->new(exodus => \%nfs_exodus, cf_exodus => {});
+	eval { $run->($none) };
+	like($@, qr/--cf-api-url/, 'with nothing to derive it from, the addon asks for --cf-api-url');
+}
+
 done_testing;

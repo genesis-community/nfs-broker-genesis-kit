@@ -28,7 +28,7 @@ sub cmd_details {
 	"This configuration can be used with BOSH to automatically register the NFS broker with Cloud Foundry.\n".
 	"Supports the following options:\n".
 	"[[  #y{--cf-deployment}       >>Name of the CF deployment to register with (default: cf)\n".
-	"[[  #y{--cf-api-url}          >>URL of the CF API (required if not using exodus data)\n".
+	"[[  #y{--cf-api-url}          >>URL of the CF API (default: https:// plus the CF exodus api_domain)\n".
 	"[[  #y{--output}              >>File to write the runtime config to, readable only by you.\n".
 	"[[                            >>It holds the broker password, so without it the password is\n".
 	"[[                            >>left out of what is shown\n".
@@ -59,21 +59,20 @@ sub perform {
 	my $broker_username = $details->{broker_username};
 	my $broker_password = $details->{broker_password};
 
-	# Try to get CF API URL from exodus data if not provided
+	# The CF kit publishes api_domain, not a URL, so the API URL is built from
+	# it.  The CF deployment shares this environment's name.  A CF exodus that
+	# predates api_domain still has the system domain in the environment file,
+	# and the manifest registers against api.<system_domain>.
 	if (!$cf_api_url) {
-		# Look up CF API URL from CF exodus data
-		my $cf_exodus_base = $env->exodus_base;
-		$cf_exodus_base =~ s/nfs/cf/;
-
-		my $cf_api_url_exodus = eval { $env->vault->get($cf_exodus_base.":api_url") };
-		if ($cf_api_url_exodus) {
-			$cf_api_url = $cf_api_url_exodus;
-		} else {
-			bail(
-				"Could not determine CF API URL from exodus data.\n".
-				"Please provide it with the --cf-api-url option."
-			);
-		}
+		my $api_domain = $env->exodus_lookup('api_domain', undef, $env->name . '/cf');
+		my $system_domain = $env->lookup('params.system_domain', undef);
+		$api_domain = "api.$system_domain"
+			if (!defined($api_domain) || $api_domain eq '') && $system_domain;
+		bail(
+			"Could not determine the CF API URL from the CF exodus data.\n".
+			"Please provide it with the --cf-api-url option."
+		) unless defined($api_domain) && $api_domain ne '';
+		$cf_api_url = "https://$api_domain";
 	}
 
 	# Generate runtime config
