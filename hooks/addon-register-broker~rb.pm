@@ -5,9 +5,9 @@ package Genesis::Hook::Addon::NFS::RegisterBroker v1.0.0;
 use strict;
 use warnings;
 use v5.20; # Genesis min perl version is 5.20
-use Genesis qw/bail info run/;
+use Genesis qw/bail info warning run/;
 use parent qw(Genesis::Hook::Addon);
-use Genesis::UI qw(prompt_for_boolean prompt_for);
+use Genesis::UI qw(prompt_for_boolean);
 use lib $ENV{GENESIS_LIB} // "$ENV{HOME}/.genesis/lib";
 
 sub init {
