@@ -9,6 +9,12 @@ use Genesis qw/bail info run/;
 use parent qw(Genesis::Hook::Addon);
 use lib $ENV{GENESIS_LIB} // "$ENV{HOME}/.genesis/lib";
 
+BEGIN {
+	require File::Basename;
+	require File::Spec;
+	require(File::Spec->rel2abs(File::Spec->catfile(File::Basename::dirname(__FILE__), '_broker.pm')));
+}
+
 sub init {
 	my $class = shift;
 	my $obj = $class->SUPER::init(@_);
@@ -23,6 +29,9 @@ sub cmd_details {
 	"Supports the following options:\n".
 	"[[  #y{--cf-deployment}       >>Name of the CF deployment to register with (default: cf)\n".
 	"[[  #y{--cf-api-url}          >>URL of the CF API (required if not using exodus data)\n".
+	"[[  #y{--output}              >>File to write the runtime config to, readable only by you.\n".
+	"[[                            >>It holds the broker password, so without it the password is\n".
+	"[[                            >>left out of what is shown\n".
 	"[[  #y{--skip-ssl-validation} >>Skip SSL validation when connecting to the CF API";
 }
 
@@ -34,25 +43,21 @@ sub perform {
 	my %options = $self->parse_options([
 		'cf-deployment=s',
 		'cf-api-url=s',
+		'output=s',
 		'skip-ssl-validation',
 	]);
 
 	my $cf_deployment = $options{'cf-deployment'} || 'cf';
 	my $cf_api_url = $options{'cf-api-url'};
+	my $output_file = $options{'output'};
 	my $skip_ssl_validation = $options{'skip-ssl-validation'} ? 1 : 0;
 
-	# Get broker information from exodus data
-	my $static_ip = $env->lookup('params.static_ip');
-	bail("Cannot determine NFS broker IP. Please check your environment configuration.")
-		unless $static_ip;
-
-	my $broker_name = $env->exodus_lookup('service_name', 'nfs');
-	my $broker_url = $env->exodus_lookup('broker_url', "http://$static_ip");
-	my $broker_username = $env->exodus_lookup('broker_username', 'admin');
-	my $broker_password = $env->exodus_lookup('broker_password');
-
-	bail("Cannot determine NFS broker password. Please check your exodus data.")
-		unless $broker_password;
+	# Get the broker details.  The password comes from the secrets store.
+	my $details = Genesis::Hook::Addon::NFS::Broker::broker_details($env, $self->vault);
+	my $broker_name     = $details->{service_name};
+	my $broker_url      = $details->{broker_url};
+	my $broker_username = $details->{broker_username};
+	my $broker_password = $details->{broker_password};
 
 	# Try to get CF API URL from exodus data if not provided
 	if (!$cf_api_url) {
@@ -76,7 +81,9 @@ sub perform {
 
 	my $skip_ssl_validation_value = $skip_ssl_validation ? "true" : "false";
 
-	my $runtime_config = <<EOF;
+	my $render = sub {
+		my ($password) = @_;
+		return <<EOF;
 ---
 releases:
   - name: broker-registrar
@@ -99,20 +106,43 @@ addons:
             name: $broker_name
             url: $broker_url
             username: $broker_username
-            password: $broker_password
+            password: $password
     include:
       deployments:
         - $env->{name}
 EOF
+	};
 
-	info(
-		"\n".
-		"\nHere's your broker-registrar runtime config:\n".
-		"\t#G{$runtime_config}\n".
-		"\nTo apply this runtime config, save it to a file (e.g., broker-registrar.yml) and run:\n".
-		"\t#G{bosh -e <bosh-env> update-runtime-config broker-registrar.yml}\n".
-		"\nThis will configure your BOSH deployment to automatically register the broker with Cloud Foundry.\n"
-	);
+	# The config holds the broker password, so it only goes to a file that
+	# only this user can read.  What is shown on the terminal, which ends up
+	# in logs, leaves the password out.
+	if ($output_file) {
+		my $old_umask = umask(0077);
+		my $ok = open(my $fh, '>', $output_file);
+		my $err = $!;
+		umask($old_umask);
+		bail("Cannot write the runtime config to #C{%s}: %s", $output_file, $err) unless $ok;
+		print $fh $render->($broker_password);
+		close($fh) or bail("Cannot finish writing #C{%s}: %s", $output_file, $!);
+		chmod(0600, $output_file);
+
+		info(
+			"\nWrote the broker-registrar runtime config to #C{%s}.\n".
+			"\nTo apply this runtime config, run:\n".
+			"\t#G{bosh -e <bosh-env> update-runtime-config %s}\n".
+			"\nThis will configure your BOSH deployment to automatically register the broker with Cloud Foundry.\n",
+			$output_file, $output_file
+		);
+	} else {
+		info(
+			"\n".
+			"\nHere's your broker-registrar runtime config, without the broker password:\n".
+			"\t#G{%s}\n".
+			"\nTo get a usable file with the password in it, run this addon again with\n".
+			"\t#G{--output <file>}\n",
+			$render->('<broker password: use --output to write it>')
+		);
+	}
 
 	return $self->done(1);
 }

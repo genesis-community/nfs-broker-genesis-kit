@@ -10,6 +10,12 @@ use parent qw(Genesis::Hook::Addon);
 use Genesis::UI qw(prompt_for_boolean);
 use lib $ENV{GENESIS_LIB} // "$ENV{HOME}/.genesis/lib";
 
+BEGIN {
+	require File::Basename;
+	require File::Spec;
+	require(File::Spec->rel2abs(File::Spec->catfile(File::Basename::dirname(__FILE__), '_broker.pm')));
+}
+
 sub init {
 	my $class = shift;
 	my $obj = $class->SUPER::init(@_);
@@ -55,22 +61,18 @@ sub perform {
 		);
 	}
 
-	# Get broker information from exodus data
-	my $static_ip = $env->lookup('params.static_ip');
-	bail("Cannot determine NFS broker IP. Please check your environment configuration.")
-		unless $static_ip;
-
-	my $broker_name = $env->exodus_lookup('service_name', 'nfs');
-	my $broker_url = $env->exodus_lookup('broker_url', "http://$static_ip");
-	my $broker_username = $env->exodus_lookup('broker_username', 'admin');
-	my $broker_password = $env->exodus_lookup('broker_password');
-
-	bail("Cannot determine NFS broker password. Please check your exodus data.")
-		unless $broker_password;
+	# Get the broker details.  The password comes from the secrets store, and
+	# goes to the cf CLI in its environment, never on the command line.
+	my $details = Genesis::Hook::Addon::NFS::Broker::broker_details($env, $self->vault);
+	my $broker_name     = $details->{service_name};
+	my $broker_url      = $details->{broker_url};
+	my $broker_username = $details->{broker_username};
+	my %cf_env          = (CF_BROKER_PASSWORD => $details->{broker_password});
+	my @ssl_flag        = $skip_ssl_validation ? ('--skip-ssl-validation') : ();
 
 	# Check if broker already exists
 	my $broker_exists = 0;
-	($out, $rc) = run({ stderr => 0 }, 'cf service-brokers | grep -q "^$broker_name\\s"');
+	($out, $rc) = run({ stderr => 0 }, 'cf service-brokers | grep -q "^$1[[:space:]]"', $broker_name);
 	$broker_exists = ($rc == 0);
 
 	if ($broker_exists && !$force) {
@@ -84,21 +86,25 @@ sub perform {
 		}
 
 		info("\nUpdating service broker '#C{$broker_name}'...");
-		my $ssl_flag = $skip_ssl_validation ? "--skip-ssl-validation" : "";
-		($out, $rc) = run("cf update-service-broker \"$broker_name\" \"$broker_username\" \"$broker_password\" \"$broker_url\" $ssl_flag");
+		($out, $rc) = run(
+			{ env => \%cf_env, redact => 1 },
+			'cf', 'update-service-broker', $broker_name, $broker_username, $broker_url, @ssl_flag
+		);
 		bail("Failed to update service broker: $out") if $rc != 0;
 
 		info("\n#G{Service broker '$broker_name' successfully updated.}");
 	} else {
 		if ($broker_exists && $force) {
 			info("\nForce option specified. Deleting existing service broker '#C{$broker_name}'...");
-			($out, $rc) = run("cf delete-service-broker \"$broker_name\" -f");
+			($out, $rc) = run('cf', 'delete-service-broker', $broker_name, '-f');
 			bail("Failed to delete existing service broker: $out") if $rc != 0;
 		}
 
 		info("\nRegistering service broker '#C{$broker_name}'...");
-		my $ssl_flag = $skip_ssl_validation ? "--skip-ssl-validation" : "";
-		($out, $rc) = run("cf create-service-broker \"$broker_name\" \"$broker_username\" \"$broker_password\" \"$broker_url\" $ssl_flag");
+		($out, $rc) = run(
+			{ env => \%cf_env, redact => 1 },
+			'cf', 'create-service-broker', $broker_name, $broker_username, $broker_url, @ssl_flag
+		);
 		bail("Failed to register service broker: $out") if $rc != 0;
 
 		info("\n#G{Service broker '$broker_name' successfully registered.}");
@@ -106,7 +112,7 @@ sub perform {
 
 	# Enable service access
 	info("\nEnabling access to services provided by the broker...");
-	($out, $rc) = run("cf enable-service-access \"$broker_name\"");
+	($out, $rc) = run('cf', 'enable-service-access', $broker_name);
 	if ($rc != 0) {
 		warning("\nFailed to enable service access. You may need to run 'cf enable-service-access $broker_name' manually.");
 	} else {
