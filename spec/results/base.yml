@@ -1,9 +1,12 @@
 exodus:
   bosh: base
+  broker_url: http://nfs-broker.sys.test.cf.domain
+  broker_username: nfs-broker
   features: ""
   iaas: null
   is_director: false
   scale: null
+  service_name: nfs
   services: null
   use_create_env: false
 instance_groups:

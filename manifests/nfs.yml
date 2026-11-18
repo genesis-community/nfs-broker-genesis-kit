@@ -2,6 +2,8 @@
 meta:
   default:
     azs: [z1]
+  service_name:    nfs
+  broker_username: nfs-broker
 
 params:
   system_domain: (( param "What is the system domain of the Cloud Foundry NFS broker should register with?" ))
@@ -11,6 +13,13 @@ params:
 
   cf_deployment: (( concat params.env "-cf" ))
 
+
+# The broker password is never published here.  The addons read it from
+# the secrets store.
+exodus:
+  service_name:    (( grab meta.service_name ))
+  broker_url:      (( concat "http://nfs-broker." params.system_domain ))
+  broker_username: (( grab meta.broker_username ))
 
 instance_groups:
   - name:      nfsbroker
@@ -35,12 +44,12 @@ instance_groups:
         properties:
           nfsbroker:
             plan_desc: A Cloud Foundry Service Broker for mounting exisiting NFS shares
-            username:  nfs-broker
+            username:  (( grab meta.broker_username ))
             password:  (( vault meta.vault "/broker:password" ))
 
             services:
               - id: nfs-service-guid
-                name: nfs
+                name: (( grab meta.service_name ))
                 description: 'Existing NFSv3 / NFSv4 Volumes'
                 bindable: true
                 plan_updateable: false
@@ -74,9 +83,9 @@ instance_groups:
         properties:
           servicebroker:
             name:     nfs-broker
-            username: nfs-broker
+            username: (( grab meta.broker_username ))
             password: ((vault meta.vault "/broker:password" ))
-            url:      (( concat "http://nfs-broker." params.system_domain ))
+            url:      (( grab exodus.broker_url ))
 
           cf:
             api_url:  (( concat "api." params.system_domain ))
