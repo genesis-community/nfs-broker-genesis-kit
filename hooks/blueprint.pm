@@ -28,8 +28,13 @@ sub perform {
 		manifests/releases.yml
 	));
 
-	# Based on the original blueprint bash script, which doesn't process features
-	# We're just including the two fixed files
+	# The kit defines no features of its own. The features hook accepts any
+	# feature that has an ops/<feature>.yml file in the environment repo, so
+	# merge each of those files after the kit manifests.
+	for my $feature ($blueprint->features) {
+		my $ops_file = $blueprint->env->path("ops/$feature.yml");
+		$blueprint->add_files($ops_file) if -f $ops_file;
+	}
 
 	return $blueprint->done();
 }
