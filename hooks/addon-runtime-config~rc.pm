@@ -27,7 +27,7 @@ sub cmd_details {
 	"Generates a runtime configuration for broker-registrar.\n".
 	"This configuration can be used with BOSH to automatically register the NFS broker with Cloud Foundry.\n".
 	"Supports the following options:\n".
-	"[[  #y{--cf-deployment}       >>Name of the CF deployment to register with (default: cf)\n".
+	"[[  #y{--cf-deployment}       >>Name of the CF deployment to register with (default: <env>-cf)\n".
 	"[[  #y{--cf-api-url}          >>URL of the CF API (default: https:// plus the CF exodus api_domain)\n".
 	"[[  #y{--output}              >>File to write the runtime config to, readable only by you.\n".
 	"[[                            >>It holds the broker password, so without it the password is\n".
@@ -47,7 +47,7 @@ sub perform {
 		'skip-ssl-validation',
 	]);
 
-	my $cf_deployment = $options{'cf-deployment'} || 'cf';
+	my $cf_deployment = $options{'cf-deployment'} || ($env->name . '-cf');
 	my $cf_api_url = $options{'cf-api-url'};
 	my $output_file = $options{'output'};
 	my $skip_ssl_validation = $options{'skip-ssl-validation'} ? 1 : 0;
@@ -60,7 +60,7 @@ sub perform {
 	my $broker_password = $details->{broker_password};
 
 	# The CF kit publishes api_domain, not a URL, so the API URL is built from
-	# it.  The CF deployment shares this environment's name.  A CF exodus that
+	# it.  The CF deployment is named for this environment and the cf kit type.  A CF exodus that
 	# predates api_domain still has the system domain in the environment file,
 	# and the manifest registers against api.<system_domain>.
 	if (!$cf_api_url) {
@@ -86,9 +86,9 @@ sub perform {
 ---
 releases:
   - name: broker-registrar
-    version: 4.1.0
-    url: https://bosh.io/d/github.com/cloudfoundry-community/broker-registrar-boshrelease?v=4.1.0
-    sha1: e12fa885c4e1a4df19d0b0be8564a1d0e7a34c9f
+    version: 3.5.2
+    url: https://bosh.io/d/github.com/cloudfoundry-community/broker-registrar-boshrelease?v=3.5.2
+    sha1: 5e49325730c41321b20ac1fe5b9bd93408263f34
 
 addons:
   - name: broker-registrar
@@ -108,7 +108,7 @@ addons:
             password: $password
     include:
       deployments:
-        - $env->{name}
+        - $cf_deployment
 EOF
 	};
 

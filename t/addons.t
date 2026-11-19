@@ -213,4 +213,43 @@ my $vault = FakeVault->new({'/secret/base/nfs/broker:password' => 'pw-from-vault
 	like($@, qr/--cf-api-url/, 'with nothing to derive it from, the addon asks for --cf-api-url');
 }
 
+# runtime-config pins the release the manifest pins and targets the CF deployment
+{
+	require "$hooks/addon-runtime-config~rc.pm";
+	my $class = 'Genesis::Hook::Addon::NFS::RuntimeConfig';
+	my @shown;
+	no warnings qw(redefine once);
+	local *Genesis::Hook::Addon::NFS::RuntimeConfig::info = sub { push @shown, join(' ', @_) };
+	my $env = FakeEnv->new(exodus => {
+		service_name    => 'nfs',
+		broker_url      => 'http://nfs-broker.sys.example.com',
+		broker_username => 'nfs-broker',
+	});
+	my $run = sub {
+		@shown = ();
+		bless({
+			env   => $env,
+			args  => [@_],
+			vault => FakeVault->new({'/secret/base/nfs/broker:password' => 'pw-from-vault'}),
+		}, $class)->perform;
+		return join("\n", @shown);
+	};
+
+	open my $mf, '<', "$hooks/../manifests/releases.yml" or die $!;
+	my $releases = do { local $/; <$mf> };
+	close $mf;
+	my ($version, $sha1) = $releases =~ /name:\s+broker-registrar\s+version:\s+"([^"]+)"\s+url:[^\n]*\n\s+sha1:\s+(\w+)/;
+	ok($version && $sha1, 'the manifest pins broker-registrar');
+
+	my $out = $run->('--cf-api-url', 'https://api.sys.example.com');
+	like($out, qr/version: \Q$version\E\b/, 'the runtime config uses the manifest release version');
+	like($out, qr/\?v=\Q$version\E\b/, 'the runtime config URL uses the manifest release version');
+	like($out, qr/sha1: \Q$sha1\E\b/, 'the runtime config uses the manifest release sha1');
+	like($out, qr/include:\s+deployments:\s+- base-cf\b/, 'the runtime config targets the CF deployment, named for the environment and kit type');
+	like($out, qr{\(\(base-cf/cf_admin_password\)\)}, 'the admin password is read from the CF deployment');
+
+	$out = $run->('--cf-api-url', 'https://api.sys.example.com', '--cf-deployment', 'other-cf');
+	like($out, qr/- other-cf\b/, '--cf-deployment names the targeted deployment');
+}
+
 done_testing;
