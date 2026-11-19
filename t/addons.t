@@ -13,9 +13,7 @@ BEGIN { unshift @INC, $ENV{GENESIS_LIB} ? $ENV{GENESIS_LIB} : $ENV{HOME}.'/.gene
 
 my $hooks = File::Spec->rel2abs(File::Spec->catdir(dirname(__FILE__), '..', 'hooks'));
 
-# A stand-in environment.  It answers from fixed tables, and it dies when
-# asked for the broker password in exodus, so a test fails if an addon
-# looks there.
+# A stand-in environment.  It answers from fixed tables.
 package FakeEnv {
 	sub new {
 		my ($class, %o) = @_;
@@ -25,7 +23,6 @@ package FakeEnv {
 	sub secrets_base { '/secret/base/nfs/' }
 	sub exodus_lookup {
 		my ($self, $key, $default, $for) = @_;
-		die "the addons must not read the password from exodus\n" if $key =~ /password/;
 		$self->{asked_for} = $for if defined $for;
 		my $table = defined $for ? ($self->{cf_exodus} // {}) : $self->{exodus};
 		return exists $table->{$key} ? $table->{$key} : $default;
@@ -62,6 +59,7 @@ my $vault = FakeVault->new({'/secret/base/nfs/broker:password' => 'pw-from-vault
 			service_name    => 'nfs-svc',
 			broker_url      => 'http://nfs-broker.sys.example.com',
 			broker_username => 'nfs-broker',
+			broker_password => 'pw-from-exodus',
 		},
 		params => {system_domain => 'ignored.example.com'},
 	);
@@ -69,8 +67,8 @@ my $vault = FakeVault->new({'/secret/base/nfs/broker:password' => 'pw-from-vault
 	is($d->{service_name},    'nfs-svc',                          'service_name comes from exodus');
 	is($d->{broker_url},      'http://nfs-broker.sys.example.com', 'broker_url comes from exodus');
 	is($d->{broker_username}, 'nfs-broker',                       'broker_username comes from exodus');
-	is($d->{broker_password}, 'pw-from-vault',                    'password comes from the secrets store');
-	is_deeply($vault->{reads}, ['/secret/base/nfs/broker:password'], 'the secrets store was read at the broker path');
+	is($d->{broker_password}, 'pw-from-exodus',                   'broker_password comes from exodus');
+	is_deeply($vault->{reads} // [], [], 'the secrets store is not read when exodus holds the password');
 }
 
 # An environment deployed before the exodus keys existed
@@ -80,6 +78,8 @@ my $vault = FakeVault->new({'/secret/base/nfs/broker:password' => 'pw-from-vault
 	is($d->{service_name},    'nfs',                           'service_name defaults to nfs');
 	is($d->{broker_url},      'http://nfs-broker.sys.example.com', 'broker_url is built from the system domain');
 	is($d->{broker_username}, 'nfs-broker',                    'broker_username defaults to the broker user');
+	is($d->{broker_password}, 'pw-from-vault',                 'broker_password falls back to the generated secret');
+	is_deeply($vault->{reads}, ['/secret/base/nfs/broker:password'], 'the fallback reads the broker secret path');
 }
 
 # Nothing to derive the URL from
@@ -89,7 +89,7 @@ my $vault = FakeVault->new({'/secret/base/nfs/broker:password' => 'pw-from-vault
 	like($@, qr/broker URL/, 'a missing URL is refused with a message');
 }
 
-# No password in the secrets store
+# No password in exodus or in the generated secrets
 {
 	my $env = FakeEnv->new(params => {system_domain => 'sys.example.com'});
 	eval { $broker->can('broker_details')->($env, FakeVault->new({})) };

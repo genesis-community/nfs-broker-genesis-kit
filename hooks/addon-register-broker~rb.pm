@@ -61,7 +61,7 @@ sub perform {
 		);
 	}
 
-	# Get the broker details.  The password comes from the secrets store, and
+	# Get the broker details from exodus.  The password
 	# goes to the cf CLI in its environment, never on the command line.
 	my $details = Genesis::Hook::Addon::NFS::Broker::broker_details($env, $self->vault);
 	my $broker_name     = $details->{service_name};

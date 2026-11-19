@@ -14,10 +14,10 @@ use Genesis qw/bail/;
 # Takes the environment and the secrets store, and returns a hash reference
 # with service_name, broker_url, broker_username, and broker_password.
 #
-# The name, URL, and user come from the exodus data this kit publishes.  An
-# environment deployed before the kit published them has none, so each one
-# falls back to the value the manifest uses.  The password is never in exodus.
-# It is read from the secrets store, where the kit generated it.
+# All four come from the exodus data this kit publishes.  An environment
+# deployed before the kit published them has none, so the name, URL, and
+# user fall back to the values the manifest uses, and the password falls
+# back to the broker secret that the kit generates.
 sub broker_details {
 	my ($env, $vault) = @_;
 
@@ -30,12 +30,16 @@ sub broker_details {
 		"and #C{params.system_domain} is not set in the environment file."
 	) unless defined($broker_url) && $broker_url ne '';
 
-	my $path = $env->secrets_base . 'broker';
-	my $broker_password = $vault->get($path, 'password');
-	bail(
-		"Cannot read the NFS broker password from the secrets store at #C{%s:password}.  ".
-		"Check that the environment's secrets have been added.", $path
-	) unless defined($broker_password) && $broker_password ne '';
+	my $broker_password = $env->exodus_lookup('broker_password', undef);
+	if (!defined($broker_password) || $broker_password eq '') {
+		my $path = $env->secrets_base . 'broker';
+		$broker_password = $vault->get($path, 'password');
+		bail(
+			"Cannot find the NFS broker password in the exodus data or at #C{%s:password}.  ".
+			"Check that the environment's secrets have been added, and deploy the ".
+			"environment to publish its exodus data.", $path
+		) unless defined($broker_password) && $broker_password ne '';
+	}
 
 	return {
 		service_name    => $env->exodus_lookup('service_name',    'nfs'),

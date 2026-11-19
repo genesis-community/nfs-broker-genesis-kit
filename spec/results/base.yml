@@ -1,5 +1,6 @@
 exodus:
   bosh: base
+  broker_password: <!{meta.vault}/broker:password!>
   broker_url: http://nfs-broker.sys.test.cf.domain
   broker_username: nfs-broker
   features: ""

@@ -14,12 +14,11 @@ params:
   cf_deployment: (( concat params.env "-cf" ))
 
 
-# The broker password is never published here.  The addons read it from
-# the secrets store.
 exodus:
   service_name:    (( grab meta.service_name ))
   broker_url:      (( concat "http://nfs-broker." params.system_domain ))
   broker_username: (( grab meta.broker_username ))
+  broker_password: (( vault meta.vault "/broker:password" ))
 
 instance_groups:
   - name:      nfsbroker

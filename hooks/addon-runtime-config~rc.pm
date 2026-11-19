@@ -52,7 +52,7 @@ sub perform {
 	my $output_file = $options{'output'};
 	my $skip_ssl_validation = $options{'skip-ssl-validation'} ? 1 : 0;
 
-	# Get the broker details.  The password comes from the secrets store.
+	# Get the broker details from exodus.
 	my $details = Genesis::Hook::Addon::NFS::Broker::broker_details($env, $self->vault);
 	my $broker_name     = $details->{service_name};
 	my $broker_url      = $details->{broker_url};
